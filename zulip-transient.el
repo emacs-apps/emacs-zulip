@@ -69,7 +69,7 @@ escape into APIs that require a server message ID."
      :inapt-if zulip-transient--message-inapt-reason)
     ("d" "Delete" zulip-feed-delete-message
      :inapt-if zulip-transient--message-inapt-reason)
-    ("+" "Toggle reaction" zulip-feed-toggle-reaction
+    ("!" "Toggle reaction" zulip-feed-toggle-reaction
      :inapt-if zulip-transient--message-inapt-reason)]])
 
 (provide 'zulip-transient)
