@@ -2539,7 +2539,7 @@ is nil, prompt for a Zulip emoji name and infer whether it is already ours."
   "e" #'zulip-feed-edit-message
   "d" #'zulip-feed-delete-message
   "!" #'zulip-feed-toggle-reaction
-  "?" #'zulip-message-transient)
+  "o" #'zulip-message-transient)
 
 (define-minor-mode zulip-feed-timeline-mode
   "Use point-local message commands outside the Zulip composer."

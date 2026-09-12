@@ -67,7 +67,6 @@ When nil, leave Evil's initial-state selection untouched."
 
 
      "g t" #'zulip-feed-open-topic
-     "?" #'zulip-message-transient
      :i
      "RET" #'newline
      "<return>" #'newline)
@@ -88,7 +87,7 @@ When nil, leave Evil's initial-state selection untouched."
      "i" #'zulip-feed-edit-message
      "Z R" #'zulip-feed-retry-send
      "C-c C-k" #'zulip-feed-cancel-edit
-     "?" #'zulip-message-transient
+     "o" #'zulip-message-transient
      "D" #'zulip-feed-delete-message
      "d d" #'zulip-feed-delete-message)))
 
