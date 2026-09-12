@@ -40,56 +40,54 @@ When nil, leave Evil's initial-state selection untouched."
   "Install navigator modal bindings."
   (appkit-evil-define-readonly-keys 'zulip-root-mode-map)
   (appkit-evil-map
-    (:map zulip-root-mode-map
-     :nm
-     "RET" #'zulip-root-open-at-point
-     "<return>" #'zulip-root-open-at-point
-     "g r" #'zulip-root-refresh
-     "g j" #'appkit-directory-next-item
-     "g k" #'appkit-directory-previous-item
-     "g o" #'zulip-root-open-destination
-     "c" #'zulip-root-open-new-direct-message
-     "g s" #'zulip-root-search-messages
-     "g t" #'zulip-root-open-topic
-     "U" #'zulip-root-next-unread
-     "@" #'zulip-root-next-mentioned)))
+    :map zulip-root-mode-map
+    :nm
+    "RET" #'zulip-root-open-at-point
+    "<return>" #'zulip-root-open-at-point
+    "g r" #'zulip-root-refresh
+    "g j" #'appkit-directory-next-item
+    "g k" #'appkit-directory-previous-item
+    "g o" #'zulip-root-open-destination
+    "c" #'zulip-root-open-new-direct-message
+    "g s" #'zulip-root-search-messages
+    "g t" #'zulip-root-open-topic
+    "U" #'zulip-root-next-unread
+    "@" #'zulip-root-next-mentioned))
 
 (defun zulip-evil--define-feed-keys ()
   "Install feed-wide and timeline-only modal bindings."
   (appkit-evil-map
-    (:map zulip-feed-mode-map
-     :nm
-     "g r" #'zulip-feed-load-latest
-     "RET" #'zulip-feed-return-dwim
-     "<return>" #'zulip-feed-return-dwim
-     "g j" #'zulip-feed-next-message
-     "g k" #'zulip-feed-previous-message
-
-
-     "g t" #'zulip-feed-open-topic
-     :i
-     "RET" #'newline
-     "<return>" #'newline)
-    (:map zulip-feed-message-map
-     :nm
-     "q" #'quit-window
-     "r" #'undefined
-     "R" #'undefined
-     "c" #'undefined
-     "RET" #'zulip-feed-open-message-context
-     "<return>" #'zulip-feed-open-message-context
-     "g r" #'zulip-feed-load-latest
-     "Z y" #'zulip-feed-copy-message
-     "M" #'zulip-feed-mark-read
-     "U" #'zulip-feed-mark-unread
-     "s" #'zulip-feed-toggle-star
-     "!" #'zulip-feed-toggle-reaction
-     "i" #'zulip-feed-edit-message
-     "Z R" #'zulip-feed-retry-send
-     "C-c C-k" #'zulip-feed-cancel-edit
-     "o" #'zulip-transient-msg-operate
-     "D" #'zulip-feed-delete-message
-     "d d" #'zulip-feed-delete-message)))
+    :map zulip-feed-mode-map
+    :nm
+    "g r" #'zulip-feed-load-latest
+    "RET" #'zulip-feed-return-dwim
+    "<return>" #'zulip-feed-return-dwim
+    "g j" #'zulip-feed-next-message
+    "g k" #'zulip-feed-previous-message
+    "g t" #'zulip-feed-open-topic
+    :i
+    "RET" #'newline
+    "<return>" #'newline
+    :map zulip-feed-message-map
+    :nm
+    "q" #'quit-window
+    "r" #'undefined
+    "R" #'undefined
+    "c" #'undefined
+    "RET" #'zulip-feed-open-message-context
+    "<return>" #'zulip-feed-open-message-context
+    "g r" #'zulip-feed-load-latest
+    "Z y" #'zulip-feed-copy-message
+    "M" #'zulip-feed-mark-read
+    "U" #'zulip-feed-mark-unread
+    "s" #'zulip-feed-toggle-star
+    "!" #'zulip-feed-toggle-reaction
+    "i" #'zulip-feed-edit-message
+    "Z R" #'zulip-feed-retry-send
+    "C-c C-k" #'zulip-feed-cancel-edit
+    "o" #'zulip-transient-msg-operate
+    "D" #'zulip-feed-delete-message
+    "d d" #'zulip-feed-delete-message))
 
 ;;;###autoload
 (defun zulip-evil-setup ()
