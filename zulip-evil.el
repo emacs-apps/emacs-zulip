@@ -59,6 +59,7 @@ When nil, leave Evil's initial-state selection untouched."
   (appkit-evil-map
     (:map zulip-feed-mode-map
      :nm
+     "g r" #'zulip-feed-load-latest
      "RET" #'zulip-feed-return-dwim
      "<return>" #'zulip-feed-return-dwim
      "g j" #'zulip-feed-next-message
@@ -78,7 +79,7 @@ When nil, leave Evil's initial-state selection untouched."
      "c" #'undefined
      "RET" #'zulip-feed-open-message-context
      "<return>" #'zulip-feed-open-message-context
-     "g r" #'zulip-feed-open-message-context
+     "g r" #'zulip-feed-load-latest
      "Z y" #'zulip-feed-copy-message
      "M" #'zulip-feed-mark-read
      "U" #'zulip-feed-mark-unread

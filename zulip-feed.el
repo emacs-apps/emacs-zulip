@@ -2528,7 +2528,6 @@ is nil, prompt for a Zulip emoji name and infer whether it is already ours."
   :doc "Single-key command map active over the generated timeline."
   "q" #'quit-window
   "RET" #'zulip-feed-open-message-context
-  "o" #'zulip-feed-open-message-context
   "t" #'zulip-feed-open-topic
   "c" #'zulip-feed-copy-message
   "n" #'zulip-feed-next-message
