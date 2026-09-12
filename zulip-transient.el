@@ -45,8 +45,8 @@ escape into APIs that require a server message ID."
 ;; Magit-style autoload: a bare `;;;###autoload' above a
 ;; `transient-define-prefix' form would copy the whole form into loaddefs,
 ;; before `transient' itself is loaded.
-;;;###autoload(autoload 'zulip-message-transient "zulip-transient" nil t)
-(transient-define-prefix zulip-message-transient ()
+;;;###autoload(autoload 'zulip-transient-msg-operate "zulip-transient" nil t)
+(transient-define-prefix zulip-transient-msg-operate ()
   "Message actions for the Zulip feed message at point."
   [["Navigate"
     ("o" "Open context" zulip-feed-open-message-context

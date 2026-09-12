@@ -56,9 +56,9 @@
 (declare-function zulip-api-result-data "zulip-api" (result))
 (declare-function zulip-api-result-message "zulip-api" (result))
 (declare-function zulip-http-cancel-request "zulip-http" (request))
-(declare-function zulip-message-transient "zulip-transient" (&rest arguments))
+(declare-function zulip-transient-msg-operate "zulip-transient" (&rest arguments))
 
-(autoload 'zulip-message-transient "zulip-transient" nil t)
+(autoload 'zulip-transient-msg-operate "zulip-transient" nil t)
 
 (defgroup zulip-feed nil
   "Zulip feed buffers."
@@ -2539,7 +2539,7 @@ is nil, prompt for a Zulip emoji name and infer whether it is already ours."
   "e" #'zulip-feed-edit-message
   "d" #'zulip-feed-delete-message
   "!" #'zulip-feed-toggle-reaction
-  "o" #'zulip-message-transient)
+  "o" #'zulip-transient-msg-operate)
 
 (define-minor-mode zulip-feed-timeline-mode
   "Use point-local message commands outside the Zulip composer."
@@ -2568,7 +2568,7 @@ is nil, prompt for a Zulip emoji name and infer whether it is already ours."
   "C-c C-k" #'zulip-feed-cancel-edit
   "C-c C-v" #'zulip-feed-preview-message
   "C-c C-m" #'zulip-feed-select-compose-codec
-  "C-c C-a" #'zulip-message-transient
+  "C-c C-a" #'zulip-transient-msg-operate
   "C-c C-t" #'zulip-feed-open-topic
   "C-c RET" #'zulip-feed-send-message
   "C-c C-c" #'zulip-feed-send-message

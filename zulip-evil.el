@@ -87,7 +87,7 @@ When nil, leave Evil's initial-state selection untouched."
      "i" #'zulip-feed-edit-message
      "Z R" #'zulip-feed-retry-send
      "C-c C-k" #'zulip-feed-cancel-edit
-     "o" #'zulip-message-transient
+     "o" #'zulip-transient-msg-operate
      "D" #'zulip-feed-delete-message
      "d d" #'zulip-feed-delete-message)))
 
