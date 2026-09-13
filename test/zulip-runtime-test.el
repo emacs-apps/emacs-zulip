@@ -63,10 +63,14 @@
   (zulip-runtime-test--isolated
     (let* ((first (zulip-runtime-create-account
                    :server "https://chat.example.com/"
-                   :email "me@example.com" :api-key "one" :state 'old))
+                   :email "me@example.com"
+                   :api-key "one"
+                   :state 'old))
            (second (zulip-runtime-create-account
                     :server "chat.example.com"
-                    :email "ME@example.com" :api-key "two" :state 'new)))
+                    :email "ME@example.com"
+                    :api-key "two"
+                    :state 'new)))
       (should (eq first second))
       (should (equal (zulip-account-api-key second) "two"))
       (should (eq (zulip-account-state second) 'old))
@@ -118,8 +122,10 @@
 (ert-deftest zulip-runtime-publish-state-keeps-account-and-app-canonical ()
   (zulip-runtime-test--isolated
     (let* ((account (zulip-runtime-create-account
-                     :server "publish.example" :email "me@example.com"
-                     :api-key "secret" :state 'old))
+                     :server "publish.example"
+                     :email "me@example.com"
+                     :api-key "secret"
+                     :state 'old))
            (app (zulip-account-app account))
            (next (list :state 'next)))
       (should (eq next (zulip-runtime-publish-state account next)))
@@ -130,10 +136,12 @@
 (ert-deftest zulip-runtime-isolates-realms-and-removes-stopped-account ()
   (zulip-runtime-test--isolated
     (let ((one (zulip-runtime-create-account
-                :server "one.example" :email "me@example.com"
+                :server "one.example"
+                :email "me@example.com"
                 :api-key "one"))
           (two (zulip-runtime-create-account
-                :server "two.example" :email "me@example.com"
+                :server "two.example"
+                :email "me@example.com"
                 :api-key "two")))
       (should-not (eq one two))
       (should (= (length (zulip-runtime-accounts)) 2))

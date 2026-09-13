@@ -17,7 +17,6 @@
 (require 'zulip-state)
 (require 'zulip-api)
 
-
 (defun zulip-events--type (event)
   "Return EVENT's wire type as a string."
   (let ((type (zulip-state-object-get event 'type)))
@@ -335,7 +334,14 @@ flags apply only to the singular `message_id' anchor."
 
 (cl-defstruct (zulip-events--transport
                (:constructor zulip-events--transport-create))
-  account app generation emit request request-token timer active-p)
+  account
+  app
+  generation
+  emit
+  request
+  request-token
+  timer
+  active-p)
 
 (defun zulip-events--transport-current-p (transport)
   "Test the exact App, account, and epoch captured by TRANSPORT."
@@ -404,8 +410,11 @@ flags apply only to the singular `message_id' anchor."
       (error "Zulip Source started with a stale account"))
     (let ((transport
            (zulip-events--transport-create
-            :account account :app app :generation generation
-            :emit emit :active-p t)))
+            :account account
+            :app app
+            :generation generation
+            :emit emit
+            :active-p t)))
       (setf (zulip-account-event-transport account) transport)
       (condition-case condition
           (zulip-events--request transport 'register)
@@ -444,15 +453,18 @@ flags apply only to the singular `message_id' anchor."
 (defun zulip-events--source (account)
   "Declare ACCOUNT's current exact protocol epoch as an App Source."
   (appkit-source-spec-create
-   :key 'zulip-events :identity (zulip-account-generation account)
+   :key 'zulip-events
+   :identity (zulip-account-generation account)
    :input (list account (zulip-account-app account)
                 (zulip-account-generation account))
    :start #'zulip-events--source-start
    :event (lambda (input operation result)
             (list 'events-result input operation result))
    :closed (lambda (input reason) (list 'events-closed input reason))
-   :outbound #'zulip-events--source-outbound :outbound-pending-limit 1
-   :emission-policy 'lossless :pending-limit 64
+   :outbound #'zulip-events--source-outbound
+   :outbound-pending-limit 1
+   :emission-policy 'lossless
+   :pending-limit 64
    :cancellation-requirement 'transport))
 
 (defun zulip-events--intent-result (_payload outcome)
@@ -462,7 +474,8 @@ flags apply only to the singular `message_id' anchor."
 (defun zulip-events--continue (account operation &optional retry-p)
   "Stage OPERATION after ACCOUNT's accepted state transition."
   (push (appkit-command-source-intent
-         :key 'zulip-events :expected-identity (zulip-account-generation account)
+         :key 'zulip-events
+         :expected-identity (zulip-account-generation account)
          :payload (list operation retry-p)
          :result-mapper #'zulip-events--intent-result)
         zulip-runtime--commands))

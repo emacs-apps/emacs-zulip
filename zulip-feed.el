@@ -177,7 +177,8 @@ composer state.  This function never edits generated buffer content or point."
                         appkit-markup-compose-active-codec)))
       (appkit-markup-compose-set-active-codec saved-codec))
     (appkit-chatbuf-input-state-set
-     (or saved-input "") :reset-history-p t)))
+     (or saved-input "")
+     :reset-history-p t)))
 
 (defun zulip-feed--advance-edit-generation ()
   "Revoke the previous edit fence before cancelling its actual request."
@@ -949,7 +950,8 @@ line.  TARGET-WIDTH and LEFT-PREFIX-WIDTH use the same geometry contract as
     (when failed
       (appkit-chat-ins-insert-prefixed-line
        (format "Send failed: %s · click or R to retry" failed)
-       :prefix body-prefix :face 'zulip-message-failed-face
+       :prefix body-prefix
+       :face 'zulip-message-failed-face
        :action (lambda () (zulip-feed-retry-send message))
        :help-echo "Retry this failed Zulip send"))
     (appkit-chat-ins-insert-reaction-line
@@ -1895,7 +1897,8 @@ human-readable composer projection used for optimistic display."
        content
        (lambda (result)
          (zulip-feed--send-finished account local-id result))
-       :local-id local-id :queue-id queue-id)
+       :local-id local-id
+       :queue-id queue-id)
       (message "Zulip: retrying failed send")
       local-id)))
 
@@ -2108,14 +2111,19 @@ is nil, prompt for a Zulip emoji name and infer whether it is already ours."
            (if (zulip-feed--result-ok-p result)
                (message "Zulip: removed :%s:" name)
              (zulip-feed--record-action-error view description result)))
-         :emoji-name name :emoji-code code :reaction-type type :owner view)
+         :emoji-name name
+         :emoji-code code
+         :reaction-type type
+         :owner view)
       (zulip-api-add-reaction
        zulip-feed--account id name
        (lambda (result)
          (if (zulip-feed--result-ok-p result)
              (message "Zulip: added :%s:" name)
            (zulip-feed--record-action-error view description result)))
-       :emoji-code code :reaction-type type :owner view))))
+       :emoji-code code
+       :reaction-type type
+       :owner view))))
 
 (defun zulip-feed--edit-fetched
     (view generation owner message-id result)
@@ -2217,7 +2225,9 @@ is nil, prompt for a Zulip emoji name and infer whether it is already ours."
       zulip-feed--account id
       (lambda (result)
         (zulip-feed--edit-fetched view generation owner id result))
-      :apply-markdown nil :allow-empty-topic-name t :owner view))))
+      :apply-markdown nil
+      :allow-empty-topic-name t
+      :owner view))))
 
 (defun zulip-feed-cancel-edit ()
   "Cancel the current staged message edit and clear its draft."
@@ -2270,7 +2280,8 @@ is nil, prompt for a Zulip emoji name and infer whether it is already ours."
         (lambda (result)
           (zulip-feed--edit-updated
            view generation owner message-id content result))
-        :content content :owner view)))))
+        :content content
+        :owner view)))))
 
 (defun zulip-feed-delete-message (&optional message)
   "Permanently delete MESSAGE at point after confirmation."
@@ -2652,9 +2663,12 @@ Account-owned optimistic sends remain in their shared domain table."
                                  'appkit-markup-compose-active-codec buffer)))
              (surface
               (appkit-open-generated-surface
-               zulip-feed--surface-type :app app :identity identity
+               zulip-feed--surface-type
+               :app app
+               :identity identity
                :input (list account narrow draft codec)
-               :buffer buffer :buffer-name name)))
+               :buffer buffer
+               :buffer-name name)))
         (with-current-buffer (appkit-surface-buffer surface)
           (zulip-completion-setup account)
           (zulip-feed--install-scroll-observer surface)
@@ -2662,7 +2676,8 @@ Account-owned optimistic sends remain in their shared domain table."
            surface (lambda (current _width)
                      (zulip-runtime--post-surface
                       current (appkit-projection-change-create
-                               :geometry-p t :frame-p t)))))
+                               :geometry-p t
+                               :frame-p t)))))
         (appkit-surface-buffer surface)))))
 
 (defun zulip-feed-open (account narrow)
@@ -2706,8 +2721,9 @@ Account-owned optimistic sends remain in their shared domain table."
     (zulip-feed--bind-account-tables account)
     (when codec (appkit-markup-compose-set-active-codec codec))
     (when draft (appkit-chatbuf-input-state-set draft :reset-history-p t))
-    (appkit-next :model narrow
-                 :render (appkit-projection-change-create :full-p t :frame-p t))))
+    (appkit-next
+     :model narrow
+     :render (appkit-projection-change-create :full-p t :frame-p t))))
 
 (defun zulip-feed--surface-update (context narrow message)
   "Commit feed state and return closed request and routing commands."
@@ -2755,7 +2771,9 @@ Account-owned optimistic sends remain in their shared domain table."
            (zulip-feed--reconcile-history-edges))
          (setq change
                (appkit-projection-change-create
-                :full-p t :frame-p t :rekeys rekeys
+                :full-p t
+                :frame-p t
+                :rekeys rekeys
                 :keys (delete-dups (apply #'append
                                           (mapcar #'zulip-feed--event-message-ids events)))
                 :resources (delete-dups
@@ -2765,8 +2783,10 @@ Account-owned optimistic sends remain in their shared domain table."
       (setq zulip-feed--history-reload-needed-p nil)
       (unless (appkit-chat-history-loading-p)
         (zulip-feed-load-latest)))
-    (appkit-next :model narrow :render change
-                 :commands (nreverse zulip-runtime--commands))))
+    (appkit-next
+     :model narrow
+     :render change
+     :commands (nreverse zulip-runtime--commands))))
 
 (defun zulip-feed--render-projection (surface _app _narrow change)
   "Reconcile committed rows and composer without I/O or premature history loss."
@@ -2814,8 +2834,10 @@ Account-owned optimistic sends remain in their shared domain table."
 
 (defconst zulip-feed--surface-type
   (appkit-surface-type-create
-   :name 'zulip-feed :mode #'zulip-feed--initialize-mode
-   :init #'zulip-feed--surface-init :update #'zulip-feed--surface-update
+   :name 'zulip-feed
+   :mode #'zulip-feed--initialize-mode
+   :init #'zulip-feed--surface-init
+   :update #'zulip-feed--surface-update
    :renderer-factory #'zulip-feed--renderer))
 
 (defun zulip-feed--bind-edit-handle (view generation owner handle)

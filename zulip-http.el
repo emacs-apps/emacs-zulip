@@ -282,7 +282,9 @@ ordinary callbacks run only in the exact owner's committed response update."
       (error "Zulip HTTP requires the account's live App or Surface"))
     (if zulip-http--source-request-p
         (zulip-http--transport-request account method endpoint params callback
-                                       :timeout timeout :headers headers :owner owner)
+                                       :timeout timeout
+                                       :headers headers
+                                       :owner owner)
       (let ((generation (zulip-account-generation account))
             (key (make-symbol "zulip-http-"))
             (active t)
@@ -308,7 +310,8 @@ ordinary callbacks run only in the exact owner's committed response update."
            (list
             'start-effect
             (appkit-effect-create
-             :key key :input nil
+             :key key
+             :input nil
              :start
              (lambda (_context _input _observe resolve _reject)
                (if (and active (appkit-owner-live-p owner)
@@ -317,14 +320,17 @@ ordinary callbacks run only in the exact owner's committed response update."
                    (setq process
                          (zulip-http--transport-request
                           account method endpoint params resolve
-                          :timeout timeout :headers headers :owner owner))
+                          :timeout timeout
+                          :headers headers
+                          :owner owner))
                  (funcall resolve nil))
                (appkit-cancellation-create
-                :kind 'transport :cancel (lambda ()
-                                           (setq effect-cancelling t)
-                                           (unwind-protect
-                                               (appkit-cancel-handle handle)
-                                             (setq effect-cancelling nil)))))
+                :kind 'transport
+                :cancel (lambda ()
+                          (setq effect-cancelling t)
+                          (unwind-protect
+                              (appkit-cancel-handle handle)
+                            (setq effect-cancelling nil)))))
              :success (lambda (_input result) (list 'response #'settle result))
              :failure (lambda (_input reason)
                         (list 'response #'settle (zulip-http--setup-error-result reason)))

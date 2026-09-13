@@ -21,9 +21,25 @@
 (cl-defstruct (zulip-account
                (:constructor zulip-account--create))
   "The authoritative model of one authenticated Zulip App."
-  id server email api-key app state feature-level server-version
-  queue-id last-event-id longpoll-timeout poll-process retry-timer retry-handle
-  generation connected-p events-enabled-p event-transport address
+  id
+  server
+  email
+  api-key
+  app
+  state
+  feature-level
+  server-version
+  queue-id
+  last-event-id
+  longpoll-timeout
+  poll-process
+  retry-timer
+  retry-handle
+  generation
+  connected-p
+  events-enabled-p
+  event-transport
+  address
   (pending (make-hash-table :test #'equal))
   (topics (make-hash-table :test #'equal))
   (topic-errors (make-hash-table :test #'equal))
@@ -147,14 +163,19 @@ Any previous account-owned copy is erased before it is released."
           account)
       (setq account
             (zulip-account--create
-             :id id :server server :email email :state state
-             :longpoll-timeout zulip-event-long-poll-timeout :generation 0))
+             :id id
+             :server server
+             :email email
+             :state state
+             :longpoll-timeout zulip-event-long-poll-timeout
+             :generation 0))
       (zulip-runtime--replace-api-key account api-key)
       (let (app complete)
         (unwind-protect
             (progn
               (setq app (appkit-app-start zulip-runtime--app-type
-                                          :identity id :input account))
+                                          :identity id
+                                          :input account))
               (setf (zulip-account-app account) app)
               (puthash id account zulip-runtime--accounts)
               (run-hook-with-args 'zulip-runtime-change-hook account 'added)
@@ -202,7 +223,8 @@ Any previous account-owned copy is erased before it is released."
         (push (appkit-command-post-message
                :target (buffer-local-value 'zulip-runtime--surface-address
                                            (appkit-surface-buffer surface))
-               :message message :delivery 'report)
+               :message message
+               :delivery 'report)
               zulip-runtime--commands)
       (appkit-surface-post surface message))))
 
@@ -211,7 +233,8 @@ Any previous account-owned copy is erased before it is released."
   (if zulip-runtime--transition-context
       (push (appkit-command-post-message
              :target (zulip-account-address account)
-             :message message :delivery 'report)
+             :message message
+             :delivery 'report)
             zulip-runtime--commands)
     (appkit-app-post (zulip-account-app account) message)))
 
@@ -260,8 +283,10 @@ Any previous account-owned copy is erased before it is released."
        (funcall callback result))
       (_ (when (fboundp 'zulip-events--update)
            (zulip-events--update account message))))
-    (appkit-next :model account :render appkit-render-none
-                 :commands (nreverse zulip-runtime--commands))))
+    (appkit-next
+     :model account
+     :render appkit-render-none
+     :commands (nreverse zulip-runtime--commands))))
 
 (defun zulip-runtime--sources (account)
   "Declare ACCOUNT's explicitly enabled event transport."

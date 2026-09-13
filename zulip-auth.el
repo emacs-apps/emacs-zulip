@@ -23,7 +23,9 @@
 (cl-defstruct (zulip-auth-target
                (:constructor zulip-auth-target--create))
   "One validated non-secret configured Zulip account target."
-  name server email)
+  name
+  server
+  email)
 
 (defun zulip-auth--nonblank-string-p (value)
   "Return non-nil when VALUE is a nonblank string."

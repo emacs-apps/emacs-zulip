@@ -69,7 +69,8 @@
 (defun zulip-media-test--row (key &optional demand)
   "Return projected KEY with a real optional Resource DEMAND."
   (appkit-projection-row-create
-   :key key :payload key
+   :key key
+   :payload key
    :resource-demands (and demand (list demand))
    :dependencies (and demand (list (appkit-resource-demand-key demand)))))
 
@@ -77,15 +78,18 @@
   "Mount ACCOUNT IDENTITY using real projection PROJECT and PRINTER."
   (appkit-open-generated-surface
    (appkit-surface-type-create
-    :name 'zulip-media-test :mode #'special-mode
+    :name 'zulip-media-test
+    :mode #'special-mode
     :init (lambda (_context input)
-            (appkit-next :model input
-                         :render (appkit-projection-change-create :full-p t)))
+            (appkit-next
+             :model input
+             :render (appkit-projection-change-create :full-p t)))
     :update (lambda (_context model message)
-              (appkit-next :model model
-                           :render (if (appkit-projection-change-p message)
-                                       message
-                                     appkit-render-none)))
+              (appkit-next
+               :model model
+               :render (if (appkit-projection-change-p message)
+                           message
+                         appkit-render-none)))
     :renderer-factory
     (lambda (_surface)
       (appkit-projection-renderer-create
@@ -93,7 +97,8 @@
        :printer (lambda (_surface _app row)
                   (when printer (funcall printer (appkit-projection-row-key row)))
                   (insert (appkit-projection-row-key row) "\n")))))
-   :app (zulip-account-app account) :identity identity))
+   :app (zulip-account-app account)
+   :identity identity))
 
 (ert-deftest zulip-media-avatar-acquisition-authenticates-only-the-account-origin ()
   (zulip-media-test--with-account account "/avatar/canonical.png"
@@ -167,7 +172,8 @@
 (ert-deftest zulip-media-avatar-interest-shares-within-account-and-cancels-last-owner ()
   (zulip-media-test--with-account account "https://cdn.example.test/shared.png"
     (let ((other (zulip-runtime-create-account
-                  :server "https://chat.example.test" :email "other@example.test"
+                  :server "https://chat.example.test"
+                  :email "other@example.test"
                   :api-key "other-synthetic-key"
                   :state (zulip-media-test--state "https://cdn.example.test/shared.png")))
           (starts 0)
@@ -212,7 +218,8 @@
 (ert-deftest zulip-media-avatar-ready-notifies-dependent-rows-and-isolates-accounts ()
   (zulip-media-test--with-account account "https://cdn.example.test/shared.png"
     (let ((other (zulip-runtime-create-account
-                  :server "https://chat.example.test" :email "other@example.test"
+                  :server "https://chat.example.test"
+                  :email "other@example.test"
                   :api-key "other-synthetic-key"
                   :state (zulip-media-test--state "https://cdn.example.test/shared.png")))
           callbacks rendered surface other-surface)

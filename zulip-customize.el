@@ -103,7 +103,7 @@ message ID, without converting Zulip's opaque decimal message IDs to numbers.
 The complete topic cache remains available to topic and destination
 completion.  Set this option to nil to show every known topic in the root."
   :type '(choice (const :tag "Show every topic" nil)
-          (integer :tag "Topics per channel" 0 *))
+                 (integer :tag "Topics per channel" 0 *))
   :group 'zulip)
 
 (defcustom zulip-message-compact-seconds 300

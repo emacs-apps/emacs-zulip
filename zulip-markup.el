@@ -40,7 +40,8 @@
                (:constructor zulip-markup-provider-object-create)
                (:copier nil))
   "One client-owned semantic value embedded in Appkit markup."
-  kind data)
+  kind
+  data)
 
 (defvar zulip-markup--node-count 0)
 

@@ -64,10 +64,12 @@
 
 (ert-deftest zulip-auth-target-selection-is-secret-free ()
   (let* ((first (zulip-auth-target--create
-                 :name "one" :server "https://one.example"
+                 :name "one"
+                 :server "https://one.example"
                  :email "one@example.com"))
          (second (zulip-auth-target--create
-                  :name "two" :server "https://two.example"
+                  :name "two"
+                  :server "https://two.example"
                   :email "two@example.com"))
          seen-collection)
     (cl-letf (((symbol-function 'completing-read)
@@ -81,7 +83,8 @@
 (ert-deftest zulip-auth-single-target-selection-does-not-prompt ()
   (let ((target
          (zulip-auth-target--create
-          :name "work" :server "https://chat.example.com"
+          :name "work"
+          :server "https://chat.example.com"
           :email "me@example.com")))
     (cl-letf (((symbol-function 'completing-read)
                (lambda (&rest _) (ert-fail "Unexpected account prompt"))))

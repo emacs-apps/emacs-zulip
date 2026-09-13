@@ -131,7 +131,9 @@ TOPIC, STREAM-ID, and DISPLAY-RECIPIENT describe channel or direct context."
 (defun zulip-root-test--topics-result (&rest topics)
   "Return one successful API result containing TOPICS."
   (zulip-api-result--create
-   :ok-p t :status 200 :data `((topics . ,(vconcat topics)))))
+   :ok-p t
+   :status 200
+   :data `((topics . ,(vconcat topics)))))
 
 (ert-deftest zulip-root-projects-stable-all-channel-topic-and-dm-rows ()
   (zulip-root-test--with-account account
@@ -370,7 +372,8 @@ TOPIC, STREAM-ID, and DISPLAY-RECIPIENT describe channel or direct context."
            (second-buffer (zulip-root--open-buffer account))
            (other (zulip-runtime-create-account
                    :server "https://other.example.test/"
-                   :email "me@example.test" :api-key "secret"
+                   :email "me@example.test"
+                   :api-key "secret"
                    :state (zulip-state-from-register (zulip-root-test--register))))
            (other-buffer (zulip-root--open-buffer other)))
       (should (eq first-buffer second-buffer))
@@ -384,7 +387,8 @@ TOPIC, STREAM-ID, and DISPLAY-RECIPIENT describe channel or direct context."
 (ert-deftest zulip-root-state-change-refreshes-only-its-view-and-keeps-position ()
   (zulip-root-test--with-account account
     (let* ((other (zulip-runtime-create-account
-                   :server "https://other.example.test/" :email "me@example.test"
+                   :server "https://other.example.test/"
+                   :email "me@example.test"
                    :api-key "secret"
                    :state (zulip-state-from-register (zulip-root-test--register))))
            (buffer (zulip-root--open-buffer account))
@@ -751,7 +755,9 @@ TOPIC, STREAM-ID, and DISPLAY-RECIPIENT describe channel or direct context."
         (should (= 2 (length calls)))
         (funcall (nth 1 (car calls))
                  (zulip-api-result--create
-                  :ok-p nil :status 503 :code "SERVICE_UNAVAILABLE"))
+                  :ok-p nil
+                  :status 503
+                  :code "SERVICE_UNAVAILABLE"))
         (zulip-runtime-test--drain account)
         (should (equal "Cached from server"
                        (plist-get

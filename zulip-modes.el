@@ -88,15 +88,20 @@
 (defun zulip-mode-line-icon ()
   "Return the clickable Zulip mode-line label."
   (appkit-mode-line-indicator
-   "Zulip" :prefix "  " :face 'mode-line-emphasis
-   :command #'zulip-mode-line-open-root :help-echo "Open Zulip"))
+   "Zulip"
+   :prefix "  "
+   :face 'mode-line-emphasis
+   :command #'zulip-mode-line-open-root
+   :help-echo "Open Zulip"))
 
 (defun zulip-mode-line-unread ()
   "Return a clickable aggregate unread indicator."
   (let ((count (car zulip-mode-line--cached-counts)))
     (unless (zerop count)
       (appkit-mode-line-indicator
-       (number-to-string count) :prefix " " :face 'zulip-mode-line-unread-face
+       (number-to-string count)
+       :prefix " "
+       :face 'zulip-mode-line-unread-face
        :command #'zulip-mode-line-open-unread
        :help-echo "Open an unread Zulip destination"))))
 
@@ -105,7 +110,9 @@
   (let ((count (cdr zulip-mode-line--cached-counts)))
     (unless (zerop count)
       (appkit-mode-line-indicator
-       (format "@%d" count) :prefix " " :face 'zulip-mode-line-mention-face
+       (format "@%d" count)
+       :prefix " "
+       :face 'zulip-mode-line-mention-face
        :command #'zulip-mode-line-open-mentions
        :help-echo "Open a Zulip destination with unread mentions"))))
 

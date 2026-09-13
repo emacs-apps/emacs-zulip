@@ -59,7 +59,9 @@
                    "https://chat.example.test/help"))
     (with-temp-buffer
       (appkit-markup-ui-insert-document
-       document :final-newline-p nil :interactive-p t
+       document
+       :final-newline-p nil
+       :interactive-p t
        :link-action (lambda (_url) #'ignore))
       (should (equal (buffer-string) "Hello bold soft docs"))
       (should (memq 'bold
@@ -152,59 +154,65 @@
       "A A &#dead; � � �"))
     (with-temp-buffer
       (appkit-markup-ui-insert-document
-       (zulip-markup-parse "<p>one<br>two<br><br>three</p>") :final-newline-p nil)
+       (zulip-markup-parse "<p>one<br>two<br><br>three</p>")
+       :final-newline-p nil)
       (should (equal (buffer-substring-no-properties (point-min) (point-max))
                      "one\ntwo\n\nthree")))))
 
 (ert-deftest zulip-feed-row-owns-anchor-around-native-markup-properties ()
   (zulip-runtime-test--isolated
-    (let* ((account (zulip-runtime-create-account
-                     :server "https://markup.example.test" :email "ada@example.test"
-                     :api-key "secret" :state (zulip-state-create)))
-           (narrow (zulip-narrow-all))
-           (state (zulip-state-merge-messages
-                   (zulip-account-state account)
-                   '(((id . "42") (type . "stream") (stream_id . 9)
-                      (sender_full_name . "Ada")
-                      (content . "<p>See <a href=\"/help\">docs</a></p>")))
-                   (zulip-narrow-key narrow)))
-           buffer)
-      (zulip-runtime-publish-state account state)
-      (setq buffer (zulip-feed--open-buffer account narrow))
-      (push buffer zulip-runtime-test--buffers)
-      (with-current-buffer buffer
-        (appkit-chat-history-window-set "42" nil)
-        (zulip-feed-render)
-        (let ((position (appkit-chat-timeline-key-position "42")))
-          (should (equal (get-text-property position 'zulip-message-id) "42"))
-          (should (get-text-property position 'read-only)))
-        (should (functionp (zulip-markup-test--property-at
-                            "docs" appkit-ui-action-property)))))))
+   (let* ((account (zulip-runtime-create-account
+                    :server "https://markup.example.test"
+                    :email "ada@example.test"
+                    :api-key "secret"
+                    :state (zulip-state-create)))
+          (narrow (zulip-narrow-all))
+          (state (zulip-state-merge-messages
+                  (zulip-account-state account)
+                  '(((id . "42") (type . "stream") (stream_id . 9)
+                     (sender_full_name . "Ada")
+                     (content . "<p>See <a href=\"/help\">docs</a></p>")))
+                  (zulip-narrow-key narrow)))
+          buffer)
+     (zulip-runtime-publish-state account state)
+     (setq buffer (zulip-feed--open-buffer account narrow))
+     (push buffer zulip-runtime-test--buffers)
+     (with-current-buffer buffer
+       (appkit-chat-history-window-set "42" nil)
+       (zulip-feed-render)
+       (let ((position (appkit-chat-timeline-key-position "42")))
+         (should (equal (get-text-property position 'zulip-message-id) "42"))
+         (should (get-text-property position 'read-only)))
+       (should (functionp (zulip-markup-test--property-at
+                           "docs" appkit-ui-action-property)))))))
 
 (ert-deftest zulip-feed-channel-object-uses-native-navigation ()
   (zulip-runtime-test--isolated
-    (let* ((account (zulip-runtime-create-account
-                     :server "https://markup.example.test" :email "ada@example.test"
-                     :api-key "secret" :state (zulip-state-create)))
-           (buffer (zulip-feed--open-buffer account (zulip-narrow-all)))
-           opened)
-      (push buffer zulip-runtime-test--buffers)
-      (with-current-buffer buffer
-        (let ((inhibit-read-only t))
-          (erase-buffer)
-          (cl-letf (((symbol-function 'zulip-feed-open)
-                     (lambda (candidate narrow) (setq opened (list candidate narrow)))))
-            (appkit-markup-ui-insert-document
-             (zulip-markup-parse
-              "<p><a class=\"stream\" data-stream-id=\"9\" href=\"/#narrow/channel/9-dev\">#dev</a></p>"
-              "https://markup.example.test")
-             :final-newline-p nil :interactive-p t
-             :link-action #'zulip-feed--markup-link-action
-             :object-inserter #'zulip-feed--insert-markup-object)
-            (appkit-ui-activate-at (point-min))
-            (should (eq (car opened) account))
-            (should (eq (zulip-narrow-kind (cadr opened)) 'channel))
-            (should (= (zulip-narrow-channel-operand (cadr opened)) 9))))))))
+   (let* ((account (zulip-runtime-create-account
+                    :server "https://markup.example.test"
+                    :email "ada@example.test"
+                    :api-key "secret"
+                    :state (zulip-state-create)))
+          (buffer (zulip-feed--open-buffer account (zulip-narrow-all)))
+          opened)
+     (push buffer zulip-runtime-test--buffers)
+     (with-current-buffer buffer
+       (let ((inhibit-read-only t))
+         (erase-buffer)
+         (cl-letf (((symbol-function 'zulip-feed-open)
+                    (lambda (candidate narrow) (setq opened (list candidate narrow)))))
+           (appkit-markup-ui-insert-document
+            (zulip-markup-parse
+             "<p><a class=\"stream\" data-stream-id=\"9\" href=\"/#narrow/channel/9-dev\">#dev</a></p>"
+             "https://markup.example.test")
+            :final-newline-p nil
+            :interactive-p t
+            :link-action #'zulip-feed--markup-link-action
+            :object-inserter #'zulip-feed--insert-markup-object)
+           (appkit-ui-activate-at (point-min))
+           (should (eq (car opened) account))
+           (should (eq (zulip-narrow-kind (cadr opened)) 'channel))
+           (should (= (zulip-narrow-channel-operand (cadr opened)) 9))))))))
 
 (provide 'zulip-markup-test)
 

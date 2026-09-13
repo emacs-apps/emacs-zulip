@@ -56,7 +56,8 @@ CHANNEL may be a positive channel ID or a non-empty channel name."
   (unless (zulip-narrow--channel-p channel)
     (error "Invalid Zulip channel operand: %S" channel))
   (zulip-narrow--create
-   :kind 'channel :channel-operand channel
+   :kind 'channel
+   :channel-operand channel
    :key (list (cons 'channel channel))))
 
 (defun zulip-narrow-topic (channel topic)
@@ -67,7 +68,9 @@ CHANNEL may be a positive channel ID or a non-empty channel name."
   (unless (stringp topic)
     (error "Invalid Zulip topic operand: %S" topic))
   (zulip-narrow--create
-   :kind 'topic :channel-operand channel :topic-name topic
+   :kind 'topic
+   :channel-operand channel
+   :topic-name topic
    :key (list (cons 'channel channel) (cons 'topic topic))))
 
 (defun zulip-narrow-direct (recipients &optional display-title)
@@ -79,18 +82,22 @@ when non-nil, supplies a human-readable participant label without changing
 the stable narrow identity."
   (let ((recipients (zulip-narrow--normalize-recipients recipients)))
     (zulip-narrow--create
-     :kind 'direct :recipient-ids recipients :display-title display-title
+     :kind 'direct
+     :recipient-ids recipients
+     :display-title display-title
      :key (list (cons 'dm recipients)))))
 
 (defun zulip-narrow-mentioned ()
   "Return the canonical feed of messages mentioning the current user."
   (zulip-narrow--create
-   :kind 'mentioned :key (list (cons 'is "mentioned"))))
+   :kind 'mentioned
+   :key (list (cons 'is "mentioned"))))
 
 (defun zulip-narrow-starred ()
   "Return the canonical feed of messages starred by the current user."
   (zulip-narrow--create
-   :kind 'starred :key (list (cons 'is "starred"))))
+   :kind 'starred
+   :key (list (cons 'is "starred"))))
 
 (defun zulip-narrow-search (query)
   "Return a server text-search narrow for non-empty QUERY."
@@ -99,7 +106,8 @@ the stable narrow identity."
     (error "Invalid Zulip search query: %S" query))
   (setq query (string-trim query))
   (zulip-narrow--create
-   :kind 'search :search-query query
+   :kind 'search
+   :search-query query
    :key (list (cons 'search query))))
 
 (defun zulip-narrow-api-operators (narrow)

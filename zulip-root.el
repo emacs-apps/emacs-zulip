@@ -721,10 +721,12 @@ The authenticated user remains present for a self-DM."
   (pcase (zulip-root--entry-type entry)
     ('summary
      (appkit-presentation-insert-note-line
-      (zulip-root--entry-title entry) :face 'font-lock-doc-face))
+      (zulip-root--entry-title entry)
+      :face 'font-lock-doc-face))
     ('heading
      (appkit-presentation-insert-heading-line
-      (zulip-root--entry-title entry) :face 'bold))
+      (zulip-root--entry-title entry)
+      :face 'bold))
     ('note
      (appkit-presentation-insert-note-line (zulip-root--entry-title entry)))
     ((or 'all 'mentioned 'starred 'channel 'topic 'dm)
@@ -804,36 +806,50 @@ to `zulip-root-visible-topics-per-channel'."
     (cl-labels ((emit (entry) (push entry entries)))
       (emit
        (zulip-root--entry-create
-        :key 'summary :type 'summary
-        :title (zulip-root--summary-text state) :width width))
+        :key 'summary
+        :type 'summary
+        :title (zulip-root--summary-text state)
+        :width width))
       (when topic-status
         (emit
          (zulip-root--entry-create
-          :key 'topic-hydration-note :type 'note
-          :title topic-status :width width)))
+          :key 'topic-hydration-note
+          :type 'note
+          :title topic-status
+          :width width)))
       (emit
        (zulip-root--entry-create
-        :key 'messages-heading :type 'heading :title "Messages"
+        :key 'messages-heading
+        :type 'heading
+        :title "Messages"
         :width width))
       (emit
        (zulip-root--entry-create
-        :key '(feed all) :type 'all :title "All messages"
+        :key '(feed all)
+        :type 'all
+        :title "All messages"
         :preview "Combined feed"
         :target (zulip-narrow-all)
         :completion "All messages"
-        :unread-count all-unread :mention-count all-mentions
+        :unread-count all-unread
+        :mention-count all-mentions
         :width width))
       (emit
        (zulip-root--entry-create
-        :key '(feed mentioned) :type 'mentioned :title "Mentions"
+        :key '(feed mentioned)
+        :type 'mentioned
+        :title "Mentions"
         :preview "Messages that mention you"
         :target (zulip-narrow-mentioned)
         :completion "Mentions"
-        :unread-count all-mentions :mention-count all-mentions
+        :unread-count all-mentions
+        :mention-count all-mentions
         :width width))
       (emit
        (zulip-root--entry-create
-        :key '(feed starred) :type 'starred :title "Starred messages"
+        :key '(feed starred)
+        :type 'starred
+        :title "Starred messages"
         :preview "Messages saved for later"
         :target (zulip-narrow-starred)
         :completion "Starred messages"
@@ -842,8 +858,10 @@ to `zulip-root-visible-topics-per-channel'."
         :width width))
       (emit
        (zulip-root--entry-create
-        :key 'channels-heading :type 'heading
-        :title "Channels" :width width))
+        :key 'channels-heading
+        :type 'heading
+        :title "Channels"
+        :width width))
       (if channels
           (dolist (channel channels)
             (let* ((channel-id (zulip-root--channel-id channel))
@@ -867,7 +885,8 @@ to `zulip-root-visible-topics-per-channel'."
               (emit
                (zulip-root--entry-create
                 :key (cons 'channel channel-id)
-                :type 'channel :title channel-name
+                :type 'channel
+                :title channel-name
                 :preview (if latest
                              (zulip-root--message-preview latest)
                            (format "%d known topic%s"
@@ -876,8 +895,10 @@ to `zulip-root-visible-topics-per-channel'."
                 :time (zulip-root--format-time latest)
                 :target (zulip-narrow-channel operand)
                 :completion (format "Channel: %s" channel-name)
-                :unread-count (car metric) :mention-count (cdr metric)
-                :muted-p muted-p :width width))
+                :unread-count (car metric)
+                :mention-count (cdr metric)
+                :muted-p muted-p
+                :width width))
               (dolist (topic visible-topics)
                 (let* ((name (plist-get topic :name))
                        (latest-message (plist-get topic :latest-message))
@@ -888,7 +909,8 @@ to `zulip-root-visible-topics-per-channel'."
                   (emit
                    (zulip-root--entry-create
                     :key (zulip-root--metric-key-topic channel-id name)
-                    :type 'topic :title name
+                    :type 'topic
+                    :title name
                     :preview (zulip-root--message-preview latest-message)
                     :time (zulip-root--format-time latest-message)
                     :target (zulip-narrow-topic operand name)
@@ -898,7 +920,8 @@ to `zulip-root-visible-topics-per-channel'."
                     :mention-count (cdr topic-metric)
                     :muted-p (zulip-root--topic-muted-p
                               state channel name)
-                    :indent 4 :width width))))
+                    :indent 4
+                    :width width))))
               (when (> hidden-count 0)
                 (emit
                  (zulip-root--entry-create
@@ -910,15 +933,18 @@ to `zulip-root-visible-topics-per-channel'."
                   :width width)))))
         (emit
          (zulip-root--entry-create
-          :key 'channels-empty :type 'note
+          :key 'channels-empty
+          :type 'note
           :title (if (zulip-account-connected-p zulip-root--account)
                      "No subscribed channels cached."
                    "Waiting for Zulip registration…")
           :width width)))
       (emit
        (zulip-root--entry-create
-        :key 'dm-heading :type 'heading
-        :title "Direct messages" :width width))
+        :key 'dm-heading
+        :type 'heading
+        :title "Direct messages"
+        :width width))
       (if conversations
           (dolist (conversation conversations)
             (let* ((participants
@@ -935,18 +961,22 @@ to `zulip-root-visible-topics-per-channel'."
                             others)))
               (emit
                (zulip-root--entry-create
-                :key key :type 'dm :title title
+                :key key
+                :type 'dm
+                :title title
                 :preview (if latest
                              (zulip-root--message-preview latest)
                            "Recent direct conversation")
                 :time (zulip-root--format-time latest)
                 :target (zulip-narrow-direct recipient-ids title)
                 :completion (format "DM: %s" title)
-                :unread-count (car metric) :mention-count (cdr metric)
+                :unread-count (car metric)
+                :mention-count (cdr metric)
                 :width width))))
         (emit
          (zulip-root--entry-create
-          :key 'dm-empty :type 'note
+          :key 'dm-empty
+          :type 'note
           :title "No recent direct conversations cached."
           :width width))))
     (nreverse entries)))
@@ -970,13 +1000,16 @@ to `zulip-root-visible-topics-per-channel'."
   (appkit-directory-reconcile
    (appkit-directory-surface)
    (mapcar #'zulip-root--directory-entry (zulip-root--project-entries))
-   :force-keys force-keys :preserve-position-p t))
+   :force-keys force-keys
+   :preserve-position-p t))
 
 (defun zulip-root--request-render (&optional force-keys)
   "Commit a navigator projection request for FORCE-KEYS."
   (let ((surface (appkit-current-surface))
         (change (appkit-projection-change-create
-                 :full-p t :frame-p t :keys force-keys)))
+                 :full-p t
+                 :frame-p t
+                 :keys force-keys)))
     (if zulip-runtime--transition-context
         (zulip-runtime--post-surface surface change)
       (appkit-surface-send surface change))))
@@ -1352,7 +1385,9 @@ account topic cache."
         (appkit-surface-buffer existing)
       (let* ((name (zulip-root--buffer-name account))
              (surface (appkit-open-generated-surface
-                       zulip-root--surface-type :app app :identity identity
+                       zulip-root--surface-type
+                       :app app
+                       :identity identity
                        :input account
                        :buffer
                        (when-let* ((candidate (get-buffer name)))
@@ -1370,7 +1405,8 @@ account topic cache."
            surface (lambda (current _width)
                      (zulip-runtime--post-surface
                       current (appkit-projection-change-create
-                               :geometry-p t :frame-p t))))
+                               :geometry-p t
+                               :frame-p t))))
           (appkit-surface-send surface '(refresh nil nil)))
         (appkit-surface-buffer surface)))))
 
@@ -1407,8 +1443,9 @@ account topic cache."
   (setq-local zulip-root--account account
               zulip-runtime--surface-address
               (appkit-transition-context-owner-address context))
-  (appkit-next :model account
-               :render (appkit-projection-change-create :full-p t :frame-p t)))
+  (appkit-next
+   :model account
+   :render (appkit-projection-change-create :full-p t :frame-p t)))
 
 (defun zulip-root--surface-update (context account message)
   "Commit root actions and response state before running acquisition Effects."
@@ -1437,8 +1474,10 @@ account topic cache."
        (unless (and reset (not (zulip-account-connected-p account)))
          (zulip-root--hydrate-topics force))
        (setq change (appkit-projection-change-create :full-p t :frame-p t))))
-    (appkit-next :model account :render change
-                 :commands (nreverse zulip-runtime--commands))))
+    (appkit-next
+     :model account
+     :render change
+     :commands (nreverse zulip-runtime--commands))))
 
 (defun zulip-root--renderer (_surface)
   "Create a native directory projection renderer for one navigator."
@@ -1460,8 +1499,10 @@ account topic cache."
 
 (defconst zulip-root--surface-type
   (appkit-surface-type-create
-   :name 'zulip-root :mode #'zulip-root--initialize-mode
-   :init #'zulip-root--surface-init :update #'zulip-root--surface-update
+   :name 'zulip-root
+   :mode #'zulip-root--initialize-mode
+   :init #'zulip-root--surface-init
+   :update #'zulip-root--surface-update
    :renderer-factory #'zulip-root--renderer))
 
 (defun zulip-root--initialize-mode ()

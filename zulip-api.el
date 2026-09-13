@@ -12,7 +12,6 @@
 (require 'cl-lib)
 (require 'zulip-http)
 
-
 (defconst zulip-api-default-event-types
   ["message"
    "update_message"
@@ -52,7 +51,8 @@ until every UI lookup has a verified missing-user fallback.")
   "Request ACCOUNT ENDPOINT with METHOD, PARAMS, CALLBACK, and optional OWNER."
   (if owner
       (zulip-http-request
-       account method endpoint params callback :owner owner)
+       account method endpoint params callback
+       :owner owner)
     (zulip-http-request account method endpoint params callback)))
 
 (defun zulip-api--message-endpoint (message-id &optional suffix)

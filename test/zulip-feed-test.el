@@ -298,9 +298,10 @@
                  (zulip-api-result--create :ok-p t :data '((raw_content . "stale edit"))))
         (funcall old-history
                  (zulip-api-result--create
-                  :ok-p t :data (list (cons 'messages
-                                            (list (zulip-feed-test--message "99" "stale page")))
-                                      '(found_newest . t))))
+                  :ok-p t
+                  :data (list (cons 'messages
+                                    (list (zulip-feed-test--message "99" "stale page")))
+                              '(found_newest . t))))
         (zulip-runtime-test--drain account)
         (with-current-buffer buffer
           (should (equal (appkit-chatbuf-input-string) (concat draft " continued")))
@@ -310,9 +311,10 @@
                       'zulip-mention)))
         (funcall (car history)
                  (zulip-api-result--create
-                  :ok-p t :data (list (cons 'messages
-                                            (list (zulip-feed-test--message "30" "current page")))
-                                      '(found_newest . t))))
+                  :ok-p t
+                  :data (list (cons 'messages
+                                    (list (zulip-feed-test--message "30" "current page")))
+                              '(found_newest . t))))
         (zulip-runtime-test--drain account)
         (with-current-buffer buffer
           (should-not (appkit-chat-history-loading-p))
@@ -371,7 +373,8 @@
             ;; recreate either the local row or a duplicate server row.
             (funcall send-callback
                      (zulip-api-result--create
-                      :ok-p t :data (list (cons 'id server-id))))
+                      :ok-p t
+                      :data (list (cons 'id server-id))))
             (zulip-runtime-test--drain account)
             (should (equal (appkit-chat-timeline-keys) (list server-id)))
             (let ((entries
@@ -404,7 +407,8 @@
             ;; object before the richer authoritative event arrives.
             (funcall send-callback
                      (zulip-api-result--create
-                      :ok-p t :data (list (cons 'id server-id))))
+                      :ok-p t
+                      :data (list (cons 'id server-id))))
             (zulip-runtime-test--drain account)
             (should (eq local-node
                         (appkit-chat-timeline-node server-id)))
@@ -505,7 +509,8 @@
         (kill-buffer buffer)
         (funcall callback
                  (zulip-api-result--create
-                  :ok-p t :data '((id . "91"))))
+                  :ok-p t
+                  :data '((id . "91"))))
         (zulip-runtime-test--drain account)
         (should-not (zulip-state-message
                      (zulip-account-state account) local-id))
@@ -536,7 +541,8 @@
         (kill-buffer buffer)
         (funcall callback
                  (zulip-api-result--create
-                  :ok-p nil :message "denied"))
+                  :ok-p nil
+                  :message "denied"))
         (zulip-runtime-test--drain account)
         (let ((message
                (zulip-state-message (zulip-account-state account) local-id)))
@@ -581,7 +587,8 @@
                          (list local-id local-id)))
           (funcall (car callbacks)
                    (zulip-api-result--create
-                    :ok-p t :data '((id . "90071992547409931234"))))
+                    :ok-p t
+                    :data '((id . "90071992547409931234"))))
           (zulip-runtime-test--drain account)
           (should-not (zulip-state-message
                        (zulip-account-state account) local-id))
@@ -869,7 +876,8 @@
           (zulip-runtime-test--drain account))
         (funcall history-callback
                  (zulip-api-result--create
-                  :ok-p nil :message "offline"))
+                  :ok-p nil
+                  :message "offline"))
         (zulip-runtime-test--drain account)
         (with-current-buffer buffer
           (should (appkit-chat-history-window-known-p))
@@ -1143,8 +1151,9 @@
             (should-not (appkit-chat-history-request-current-p operation)))
           (funcall callback
                    (zulip-api-result--create
-                    :ok-p t :data (list (cons 'messages
-                                              (vector (zulip-feed-test--message "99" "stale"))))))
+                    :ok-p t
+                    :data (list (cons 'messages
+                                      (vector (zulip-feed-test--message "99" "stale"))))))
           (zulip-runtime-test--drain account)
           (should-not (zulip-state-message (zulip-account-state account) "99")))))))
 
@@ -1225,7 +1234,8 @@
           (setq-local zulip-feed--last-read-target-id "20")
           (funcall callback
                    (zulip-api-result--create
-                    :ok-p nil :message "network down"))
+                    :ok-p nil
+                    :message "network down"))
           (zulip-runtime-test--drain account)
           (should (= (hash-table-count zulip-feed--pending-read-ids) 2))
           (should (eq (gethash "11" zulip-feed--pending-read-ids) 'foreign))
@@ -1327,7 +1337,8 @@
                        (should (equal id "20"))
                        (should-not (plist-get options :apply-markdown))
                        (funcall callback (zulip-api-result--create
-                                          :ok-p t :data '((raw_content . "**old**"))))))
+                                          :ok-p t
+                                          :data '((raw_content . "**old**"))))))
                     ((symbol-function 'zulip-api-update-message)
                      (lambda (_account id callback &rest options)
                        (setq update-call (list id options))
@@ -1407,7 +1418,8 @@
 
             (funcall get-callback
                      (zulip-api-result--create
-                      :ok-p t :data '((raw_content . "raw source"))))
+                      :ok-p t
+                      :data '((raw_content . "raw source"))))
             (zulip-runtime-test--drain account)
             (should-not buffer-read-only)
             (should (equal (appkit-chatbuf-input-string) "raw source"))
@@ -1459,7 +1471,8 @@
                        (funcall
                         callback
                         (zulip-api-result--create
-                         :ok-p t :data '((raw_content . "raw source"))))))
+                         :ok-p t
+                         :data '((raw_content . "raw source"))))))
                     ((symbol-function 'zulip-api-update-message)
                      (lambda (_account _id callback &rest options)
                        (setq patch-callback callback
@@ -1541,7 +1554,8 @@
                      (lambda (_account _id callback &rest _options)
                        (funcall callback
                                 (zulip-api-result--create
-                                 :ok-p t :data '((raw_content . "raw")))))))
+                                 :ok-p t
+                                 :data '((raw_content . "raw")))))))
             (zulip-feed-edit-message)
             (let ((undo-before buffer-undo-list))
               (zulip-runtime-test--drain account)
@@ -1601,7 +1615,8 @@
                 (let ((point-before (point)))
                   (funcall stale-get
                            (zulip-api-result--create
-                            :ok-p t :data '((raw_content . "stale raw"))))
+                            :ok-p t
+                            :data '((raw_content . "stale raw"))))
                   (zulip-runtime-test--drain account)
                   (should (= (point) point-before)))
                 (should (eq zulip-feed--edit-operation-owner new-owner))
@@ -1617,7 +1632,8 @@
             (let ((current-get (gethash "30" get-callbacks)))
               (funcall current-get
                        (zulip-api-result--create
-                        :ok-p t :data '((raw_content . "raw thirty"))))
+                        :ok-p t
+                        :data '((raw_content . "raw thirty"))))
               (should (equal (appkit-chatbuf-input-string)
                              "draft after cancel"))
               (zulip-runtime-test--drain account)

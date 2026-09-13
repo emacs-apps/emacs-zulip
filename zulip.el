@@ -42,7 +42,9 @@ asynchronously."
   ;; canonical state/views until the register epoch atomically replaces them.
   (let ((account
          (zulip-runtime-create-account
-          :server server :email email :api-key api-key
+          :server server
+          :email email
+          :api-key api-key
           :state (zulip-state-create))))
     (zulip-events-start account)
     account))

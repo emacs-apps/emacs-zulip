@@ -686,7 +686,9 @@ When CACHED-P is non-nil, MESSAGE-ID is also part of the local message cache."
            (conversation
             (or (gethash key (zulip-state-dm-conversations state))
                 (zulip-dm-conversation--create
-                 :key key :participant-ids (cdr key) :message-ids nil))))
+                 :key key
+                 :participant-ids (cdr key)
+                 :message-ids nil))))
       (when cached-p
         (setf (zulip-dm-conversation-message-ids conversation)
               (zulip-state--sort-message-ids
