@@ -119,6 +119,8 @@ access to the all-messages feed now that `zulip' opens the navigator."
       (zulip-runtime-stop-account account)
     (user-error "No live Zulip account for %s" email)))
 
+(require 'zulip-transient)
+
 (provide 'zulip)
 
 (with-eval-after-load 'evil

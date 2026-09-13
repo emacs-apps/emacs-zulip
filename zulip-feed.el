@@ -58,7 +58,7 @@
 (declare-function zulip-http-cancel-request "zulip-http" (request))
 (declare-function zulip-transient-msg-operate "zulip-transient" (&rest arguments))
 
-(autoload 'zulip-transient-msg-operate "zulip-transient" nil t)
+(declare-function zulip-transient-msg-operate "zulip-transient" nil)
 
 (defgroup zulip-feed nil
   "Zulip feed buffers."
