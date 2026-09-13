@@ -17,13 +17,6 @@
 (require 'zulip-state)
 (require 'zulip-api)
 
-(declare-function zulip-api-result-ok-p "zulip-http" result)
-(declare-function zulip-api-result-data "zulip-http" result)
-(declare-function zulip-api-result-code "zulip-http" result)
-(declare-function zulip-http-cancel-request "zulip-http" request)
-(declare-function zulip-api-register "zulip-api" account callback &optional types)
-(declare-function zulip-api-get-events
-                  "zulip-api" account queue-id last-event-id callback)
 
 (defun zulip-events--type (event)
   "Return EVENT's wire type as a string."

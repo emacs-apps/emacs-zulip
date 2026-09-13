@@ -12,7 +12,6 @@
 (require 'cl-lib)
 (require 'zulip-http)
 
-(declare-function zulip-account-longpoll-timeout "zulip-runtime" account)
 
 (defconst zulip-api-default-event-types
   ["message"

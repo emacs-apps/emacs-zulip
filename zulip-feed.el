@@ -32,6 +32,7 @@
 (require 'appkit-markup-ui)
 (require 'appkit-markup-compose)
 (require 'appkit-presentation)
+(require 'zulip-api)
 (require 'zulip-customize)
 (require 'zulip-completion)
 (require 'zulip-runtime)
@@ -40,24 +41,7 @@
 (require 'zulip-markup)
 (require 'zulip-state)
 
-(declare-function zulip-state-object-get "zulip-state" (object key))
-(declare-function zulip-state-messages-for-narrow "zulip-state" (state narrow-key))
-(declare-function zulip-state-upsert-message "zulip-state" (state message &optional narrow-keys))
-(declare-function zulip-state-merge-messages "zulip-state" (state messages narrow-key))
-(declare-function zulip-api-get-messages "zulip-api" (account narrow anchor before after callback &rest options))
-(declare-function zulip-api-send-message "zulip-api" (account type to topic content callback &rest options))
-(declare-function zulip-api-update-message-flags "zulip-api" (account message-ids operation flag callback &rest options))
-(declare-function zulip-api-get-message "zulip-api" (account message-id callback &rest options))
-(declare-function zulip-api-update-message "zulip-api" (account message-id callback &rest options))
-(declare-function zulip-api-delete-message "zulip-api" (account message-id callback &rest options))
-(declare-function zulip-api-add-reaction "zulip-api" (account message-id emoji-name callback &rest options))
-(declare-function zulip-api-remove-reaction "zulip-api" (account message-id callback &rest options))
-(declare-function zulip-api-result-ok-p "zulip-api" (result))
-(declare-function zulip-api-result-data "zulip-api" (result))
-(declare-function zulip-api-result-message "zulip-api" (result))
-(declare-function zulip-http-cancel-request "zulip-http" (request))
-(declare-function zulip-transient-msg-operate "zulip-transient" (&rest arguments))
-
+(declare-function zulip-transient-msg-operate "zulip-transient" ())
 
 (defgroup zulip-feed nil
   "Zulip feed buffers."
@@ -2166,7 +2150,8 @@ is nil, prompt for a Zulip emoji name and infer whether it is already ours."
                    (message "Zulip: fetch message source failed: %s" reason))))
             (zulip-feed--set-edit-state
              message-id nil nil nil
-             :generation generation :operation-owner nil)
+             :generation generation
+             :operation-owner nil)
             (setq zulip-feed--last-error nil)
             (unless (eq appkit-markup-compose-active-codec 'markdown)
               (appkit-markup-compose-set-active-codec 'markdown))
@@ -2198,7 +2183,8 @@ is nil, prompt for a Zulip emoji name and infer whether it is already ours."
           (let ((reason (zulip-feed--result-message result)))
             (zulip-feed--set-edit-state
              message-id nil nil nil
-             :generation generation :operation-owner nil)
+             :generation generation
+             :operation-owner nil)
             (setq zulip-feed--last-error reason)
             (zulip-feed--request-edit-sync
              view generation
@@ -2219,7 +2205,8 @@ is nil, prompt for a Zulip emoji name and infer whether it is already ours."
     (zulip-feed--set-edit-state
      id t message (copy-sequence (or (appkit-chatbuf-input-state) ""))
      :saved-codec appkit-markup-compose-active-codec
-     :generation generation :operation-owner owner)
+     :generation generation
+     :operation-owner owner)
     ;; A just-finished or cancelled predecessor may have updated canonical
     ;; draft state without materializing it yet.  The new generation owns that
     ;; barrier as well as its working frame.
@@ -2273,7 +2260,8 @@ is nil, prompt for a Zulip emoji name and infer whether it is already ours."
                   view generation message-id 'patch)))
       (zulip-feed--set-edit-state
        message-id t nil nil
-       :generation generation :operation-owner owner)
+       :generation generation
+       :operation-owner owner)
       (zulip-feed--request-action-frame view)
       (zulip-feed--bind-edit-handle
        view generation owner
