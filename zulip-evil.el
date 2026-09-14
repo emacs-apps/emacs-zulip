@@ -78,6 +78,7 @@ When nil, leave Evil's initial-state selection untouched."
     "<return>" #'zulip-feed-open-message-context
     "g r" #'zulip-feed-load-latest
     "Z y" #'zulip-feed-copy-message
+    "T" #'zulip-feed-translate-message
     "M" #'zulip-feed-mark-read
     "U" #'zulip-feed-mark-unread
     "s" #'zulip-feed-toggle-star

@@ -17,6 +17,7 @@
 (require 'seq)
 (require 'subr-x)
 (require 'url-util)
+(require 'xml)
 (require 'appkit-core)
 (require 'appkit-compose)
 (require 'appkit-projection)
@@ -42,6 +43,12 @@
 (require 'zulip-state)
 
 (declare-function zulip-transient-msg-operate "zulip-transient" ())
+(declare-function appkit-translate-context-create "appkit-translate" (owner notify))
+(declare-function appkit-translate-context-live-p "appkit-translate" (context))
+(declare-function appkit-translate-request "appkit-translate"
+                  (context source &optional backend language force))
+(declare-function appkit-translate-insert "appkit-translate"
+                  (context source &optional prefix prefix-face))
 
 (defgroup zulip-feed nil
   "Zulip feed buffers."
@@ -58,6 +65,12 @@
 
 (defvar-local zulip-feed--account nil
   "Account owning the current feed buffer.")
+
+(defvar-local zulip-feed--translation-context nil
+  "Optional translation state owned by this feed's exact Surface.")
+
+(defvar-local zulip-feed--translation-surface nil
+  "Exact Surface owning `zulip-feed--translation-context'.")
 
 (defvar-local zulip-feed--narrow nil
   "Canonical narrow displayed by the current feed buffer.")
@@ -232,7 +245,8 @@ makes both materialization and ACTION inert."
     (setq zulip-feed--edit-sync-request
           (list :view view :generation generation :action action))
     (zulip-runtime--post-surface view
-                                 (appkit-projection-change-create :frame-p t))))
+                                 (appkit-projection-change-create
+                                  :frame-p t))))
 
 (defun zulip-feed--update-edit-read-only-state ()
   "Reflect the current edit owner/barrier in `buffer-read-only'."
@@ -689,7 +703,8 @@ Both Lisp hyphen names and API underscore names are accepted."
     (when face
       (add-face-text-property start (point) face 'append))
     (when action
-      (appkit-ui-add-action start (point) action :face face))
+      (appkit-ui-add-action start (point) action
+                            :face face))
     (cons start (point))))
 
 (defun zulip-feed--insert-markup-document (document)
@@ -773,6 +788,62 @@ Both Lisp hyphen names and API underscore names are accepted."
             (appkit-markup-document
              (appkit-markup-object-block-fallback node)))
          (zulip-feed--insert-markup-fallback node))))))
+
+(defun zulip-feed--translation-source (message &optional include-text)
+  "Return a scoped translation source for canonical MESSAGE.
+INCLUDE-TEXT extracts semantic source text only for an explicit request.
+Rendered spoilers remain concealed; literal local source stays literal."
+  (let* ((local (zulip-feed--field message 'local-content))
+         (rendered (zulip-feed--field message 'rendered-content))
+         (content (zulip-feed--field message 'content))
+         (authoritative (zulip-feed--field message 'authoritative))
+         (local-p (and (stringp local)
+                       (not (zulip-feed--true-p authoritative))))
+         (server (zulip-account-server zulip-feed--account))
+         (source
+          (list :key (list 'zulip (zulip-account-id zulip-feed--account)
+                           (zulip-feed--message-key message))
+                :version (list local rendered content authoritative local-p
+                               server 'concealed-spoilers))))
+    (when include-text
+      (setq source
+            (plist-put
+             source :text
+             (zulip-markup-plain-text
+              (if local-p
+                  (concat "<pre>" (xml-escape-string local) "</pre>")
+                (format "%s" (or rendered content "")))
+              server))))
+    source))
+
+(defun zulip-feed-translate-message ()
+  "Translate the canonical message at point on explicit request.
+Use `appkit-translate-backend-function' and the shared target language.
+Original message state and composer input are never changed."
+  (interactive)
+  (zulip-feed--assert-live)
+  (let ((message (or (zulip-feed-message-at-point)
+                     (user-error "No Zulip message at point")))
+        (surface (appkit-current-surface)))
+    (require 'appkit-translate)
+    (unless (and (eq surface zulip-feed--translation-surface)
+                 (appkit-translate-context-live-p
+                  zulip-feed--translation-context))
+      (setq zulip-feed--translation-surface surface
+            zulip-feed--translation-context
+            (appkit-translate-context-create
+             surface
+             (lambda (key)
+               (when (appkit-surface-live-p surface)
+                 (with-current-buffer (appkit-surface-buffer surface)
+                   (when (zulip-feed--captured-view-current-p surface)
+                     (zulip-runtime--post-surface
+                      surface
+                      (appkit-projection-change-create
+                       :keys (list (nth 2 key)))))))))))
+    (appkit-translate-request
+     zulip-feed--translation-context
+     (zulip-feed--translation-source message t))))
 
 (defun zulip-feed--insert-message-body (message)
   "Insert MESSAGE body through the Appkit semantic markup boundary.
@@ -881,6 +952,12 @@ line.  TARGET-WIDTH and LEFT-PREFIX-WIDTH use the same geometry contract as
             (add-face-text-property
              (1- (cdr span)) (cdr span)
              'font-lock-constant-face 'append)))))
+    (when (and zulip-feed--translation-context
+               (eq zulip-feed--translation-surface (appkit-current-surface))
+               (appkit-translate-context-live-p zulip-feed--translation-context))
+      (appkit-translate-insert
+       zulip-feed--translation-context
+       (zulip-feed--translation-source message)))
     (appkit-ui-apply-line-prefix start (point) prefix)))
 
 (defun zulip-feed--row-printer (row)
@@ -1188,7 +1265,9 @@ timeline flush with the top of the buffer like telega chat buffers."
   "Request a committed Generated Surface projection of the current feed."
   (interactive)
   (let ((surface (appkit-current-surface))
-        (change (appkit-projection-change-create :full-p t :frame-p t)))
+        (change (appkit-projection-change-create
+                 :full-p t
+                 :frame-p t)))
     (unless (appkit-surface-live-p surface)
       (error "Zulip feed has no live Generated Surface"))
     (if zulip-runtime--transition-context
@@ -1472,7 +1551,8 @@ Appkit resources affected by it."
                kind previous-first (zulip-feed--result-data result)))
           (setq zulip-feed--last-error (zulip-feed--result-message result)))
         (zulip-runtime--post-surface
-         surface (appkit-projection-change-create :frame-p t))))))
+         surface (appkit-projection-change-create
+                  :frame-p t))))))
 
 (defun zulip-feed--load-history (kind anchor before after)
   "Load KIND history with a Surface-owned transport and an exact request fence."
@@ -1491,7 +1571,8 @@ Appkit resources affected by it."
            :owner surface)))
     (appkit-chat-history-request-bind-handle operation handle)
     (zulip-runtime--post-surface
-     surface (appkit-projection-change-create :frame-p t))
+     surface (appkit-projection-change-create
+              :frame-p t))
     operation))
 
 (defun zulip-feed-load-latest ()
@@ -1914,7 +1995,8 @@ human-readable composer projection used for optimistic display."
 (defun zulip-feed--request-action-frame (view)
   "Request a coalesced refresh of passive action state in Appkit VIEW."
   (zulip-runtime--post-surface view
-                               (appkit-projection-change-create :frame-p t)))
+                               (appkit-projection-change-create
+                                :frame-p t)))
 
 (defun zulip-feed--record-action-error (view description result)
   "Present failed DESCRIPTION from RESULT in live Appkit VIEW."
@@ -2163,7 +2245,8 @@ is nil, prompt for a Zulip emoji name and infer whether it is already ours."
             (setq zulip-feed--last-error nil)
             (unless (eq appkit-markup-compose-active-codec 'markdown)
               (appkit-markup-compose-set-active-codec 'markdown))
-            (appkit-chatbuf-input-state-set raw :reset-history-p t)
+            (appkit-chatbuf-input-state-set raw
+                                            :reset-history-p t)
             (zulip-feed--request-edit-sync
              view generation
              (lambda ()
@@ -2528,6 +2611,7 @@ is nil, prompt for a Zulip emoji name and infer whether it is already ours."
   "RET" #'zulip-feed-open-message-context
   "t" #'zulip-feed-open-topic
   "c" #'zulip-feed-copy-message
+  "T" #'zulip-feed-translate-message
   "n" #'zulip-feed-next-message
   "p" #'zulip-feed-previous-message
   "r" #'zulip-feed-mark-read
@@ -2583,6 +2667,8 @@ Account-owned optimistic sends remain in their shared domain table."
   (appkit-chatbuf-reset-state)
   (appkit-chat-history-reset-state)
   (setq-local zulip-feed--pending nil)
+  (setq-local zulip-feed--translation-context nil)
+  (setq-local zulip-feed--translation-surface nil)
   (setq-local zulip-feed--last-error nil)
   (setq-local zulip-feed--latest-live-keys nil)
   (setq-local zulip-feed--history-reload-needed-p nil)
@@ -2720,10 +2806,13 @@ Account-owned optimistic sends remain in their shared domain table."
                 (appkit-transition-context-owner-address context))
     (zulip-feed--bind-account-tables account)
     (when codec (appkit-markup-compose-set-active-codec codec))
-    (when draft (appkit-chatbuf-input-state-set draft :reset-history-p t))
+    (when draft (appkit-chatbuf-input-state-set draft
+                                                :reset-history-p t))
     (appkit-next
      :model narrow
-     :render (appkit-projection-change-create :full-p t :frame-p t))))
+     :render (appkit-projection-change-create
+              :full-p t
+              :frame-p t))))
 
 (defun zulip-feed--surface-update (context narrow message)
   "Commit feed state and return closed request and routing commands."
@@ -2738,7 +2827,8 @@ Account-owned optimistic sends remain in their shared domain table."
        (push (appkit-command-start-effect effect) zulip-runtime--commands))
       (`(response ,callback ,result)
        (funcall callback result)
-       (setq change (appkit-projection-change-create :frame-p t)))
+       (setq change (appkit-projection-change-create
+                     :frame-p t)))
       (`(events ,events)
        (let* ((types (mapcar (lambda (event)
                                (downcase (format "%s" (zulip-feed--field event 'type))))
@@ -2822,14 +2912,17 @@ Account-owned optimistic sends remain in their shared domain table."
    :mount (lambda (_surface _app _model) (zulip-feed--ensure-timeline))
    :merge #'appkit-projection-change-merge
    :resource-request (lambda (keys)
-                       (appkit-projection-change-create :resources keys))
+                       (appkit-projection-change-create
+                        :resources keys))
    :render #'zulip-feed--render-projection
    :recover
    (lambda (surface app narrow _condition)
      (setq-local appkit-chat-timeline--state nil)
      (zulip-feed--ensure-timeline)
      (zulip-feed--render-projection
-      surface app narrow (appkit-projection-change-create :full-p t :frame-p t)))
+      surface app narrow (appkit-projection-change-create
+                          :full-p t
+                          :frame-p t)))
    :unmount #'zulip-feed--unmount))
 
 (defconst zulip-feed--surface-type
