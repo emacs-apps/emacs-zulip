@@ -1742,6 +1742,32 @@
               (should (eq (plist-get (cadr captured) :owner)
                           (appkit-current-surface))))))))))
 
+(ert-deftest zulip-feed-translate-message-renders-inline ()
+  (zulip-feed-test--with-account account
+    (let* ((narrow (zulip-narrow-topic 7 "client"))
+           (key (zulip-narrow-key narrow))
+           (message (zulip-feed-test--message "20" "Hello world"))
+           (state (zulip-state-merge-messages
+                   (zulip-account-state account) (list message) key))
+           (backend (list :id 'echo :label "Echo"
+                          :start (lambda (source _lang resolve _reject)
+                                   (funcall resolve (concat "你好 " (plist-get source :text)))
+                                   nil))))
+      (zulip-runtime-publish-state account state)
+      (let ((buffer (zulip-feed--open-buffer account narrow)))
+        (with-current-buffer buffer
+          (appkit-chat-history-window-set "20" nil)
+          (zulip-feed-render)
+          (goto-char (point-min))
+          (search-forward "Hello world")
+          (cl-letf (((symbol-function 'appkit-translate-respond-backend)
+                     (lambda () backend)))
+            (zulip-feed-translate-message)
+            (zulip-runtime-test--drain account)
+            (goto-char (point-min))
+            (should (search-forward "Translation · zh · Echo" nil t))
+            (should (search-forward "你好 Hello world" nil t))))))))
+
 (provide 'zulip-feed-test)
 
 ;;; zulip-feed-test.el ends here

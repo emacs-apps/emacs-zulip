@@ -43,12 +43,11 @@
 (require 'zulip-state)
 
 (declare-function zulip-transient-msg-operate "zulip-transient" ())
-(declare-function appkit-translate-context-create "appkit-translate" (owner notify))
-(declare-function appkit-translate-context-live-p "appkit-translate" (context))
+(declare-function appkit-translate-enable "appkit-translate" (owner &optional notify))
 (declare-function appkit-translate-request "appkit-translate"
-                  (context source &optional backend language force))
+                  (source &optional backend language force notify-or-surface surface))
 (declare-function appkit-translate-insert "appkit-translate"
-                  (context source &optional prefix prefix-face))
+                  (source &optional prefix prefix-face surface))
 
 (defgroup zulip-feed nil
   "Zulip feed buffers."
@@ -65,9 +64,6 @@
 
 (defvar-local zulip-feed--account nil
   "Account owning the current feed buffer.")
-
-(defvar-local zulip-feed--translation-context nil
-  "Optional translation state owned by this feed's exact Surface.")
 
 
 (defvar-local zulip-feed--narrow nil
@@ -814,6 +810,16 @@ Rendered spoilers remain concealed; literal local source stays literal."
               server))))
     source))
 
+(defun zulip-feed--translate-notify (surface key)
+  "Invalidate feed row in SURFACE matching source KEY."
+  (when (appkit-surface-live-p surface)
+    (with-current-buffer (appkit-surface-buffer surface)
+      (when (zulip-feed--captured-view-current-p surface)
+        (zulip-runtime--post-surface
+         surface
+         (appkit-projection-change-create
+          :keys (list (nth 2 key))))))))
+
 (defun zulip-feed-translate-message ()
   "Translate the canonical message at point on explicit request.
 Use `appkit-translate-backend-function' and the shared target language.
@@ -824,20 +830,9 @@ Original message state and composer input are never changed."
                      (user-error "No Zulip message at point")))
         (surface (appkit-current-surface)))
     (require 'appkit-translate)
-    (unless zulip-feed--translation-context
-      (setq-local zulip-feed--translation-context
-                  (appkit-translate-context-create
-                   surface
-                   (lambda (key)
-                     (when (appkit-surface-live-p surface)
-                       (with-current-buffer (appkit-surface-buffer surface)
-                         (when (zulip-feed--captured-view-current-p surface)
-                           (zulip-runtime--post-surface
-                            surface
-                            (appkit-projection-change-create
-                             :keys (list (nth 2 key)))))))))))
+    (appkit-translate-enable
+     surface (lambda (key) (zulip-feed--translate-notify surface key)))
     (appkit-translate-request
-     zulip-feed--translation-context
      (zulip-feed--translation-source message t))))
 
 (defun zulip-feed--insert-message-body (message)
@@ -947,11 +942,8 @@ line.  TARGET-WIDTH and LEFT-PREFIX-WIDTH use the same geometry contract as
             (add-face-text-property
              (1- (cdr span)) (cdr span)
              'font-lock-constant-face 'append)))))
-    (when (and zulip-feed--translation-context
-               (appkit-translate-context-live-p
-                zulip-feed--translation-context))
+    (when (featurep 'appkit-translate)
       (appkit-translate-insert
-       zulip-feed--translation-context
        (zulip-feed--translation-source message)))
     (appkit-ui-apply-line-prefix start (point) prefix)))
 
@@ -2662,7 +2654,6 @@ Account-owned optimistic sends remain in their shared domain table."
   (appkit-chatbuf-reset-state)
   (appkit-chat-history-reset-state)
   (setq-local zulip-feed--pending nil)
-  (setq-local zulip-feed--translation-context nil)
   (setq-local zulip-feed--last-error nil)
   (setq-local zulip-feed--latest-live-keys nil)
   (setq-local zulip-feed--history-reload-needed-p nil)
