@@ -565,20 +565,21 @@ Reject traversal deeper than `zulip-markup-max-depth'."
               unless first collect (appkit-markup-line-break)
               collect (appkit-markup-text line))))))
 
-(defun zulip-markup-parse (html &optional base-url)
+(defun zulip-markup-parse (html &optional base-url no-fallback)
   "Return an Appkit document adapted from Zulip rendered HTML.
 
 Resolve provider-relative URLs against BASE-URL.  Active/embed DOM subtrees are
-never interpreted.  Missing libxml and parse failures produce conservative
-plain-text blocks rather than a second HTML rendering path."
+never interpreted.  Missing libxml and parse failures normally produce readable
+plain-text blocks for local display.  That fallback can expose hidden content:
+with NO-FALLBACK non-nil, signal instead, for privacy-sensitive export."
   (setq html (zulip-markup--clean-string html))
   (when (> (length html) zulip-markup-max-source-length)
     (error "Zulip message markup exceeds the source limit"))
   (let ((zulip-markup--node-count 0))
-    (condition-case nil
-        (if (not (zulip-markup-libxml-available-p))
-            (zulip-markup--plain-document
-             (zulip-markup--fallback-text html))
+    (condition-case err
+        (progn
+          (unless (zulip-markup-libxml-available-p)
+            (error "HTML parsing requires libxml"))
           (let* ((dom (zulip-markup--parse-html html))
                  (root (zulip-markup--root dom)))
             (unless root (error "Zulip markup wrapper was not parsed"))
@@ -586,8 +587,10 @@ plain-text blocks rather than a second HTML rendering path."
              (zulip-markup--blocks
               (zulip-markup--children root) base-url 0))))
       (error
-       (zulip-markup--plain-document
-        (zulip-markup--fallback-text html))))))
+       (if no-fallback
+           (signal (car err) (cdr err))
+         (zulip-markup--plain-document
+          (zulip-markup--fallback-text html)))))))
 
 (defun zulip-markup--reveal-spoiler-blocks (blocks)
   "Return BLOCKS with spoiler objects expanded to their semantic content."
@@ -640,7 +643,9 @@ plain-text blocks rather than a second HTML rendering path."
   "Return semantic plain text for Zulip rendered HTML and BASE-URL.
 
 When REVEAL-SPOILERS-P is non-nil, include spoiler content for an explicit
-message-copy operation.  Generic summaries and previews retain safe fallback."
+message-copy operation.  Otherwise semantic spoilers use their concealed
+fallback, but parse failures still use readable local text.  Privacy-sensitive
+export must use `zulip-markup-parse' with NO-FALLBACK instead."
   (let ((document (zulip-markup-parse html base-url)))
     (when reveal-spoilers-p
       (setq document

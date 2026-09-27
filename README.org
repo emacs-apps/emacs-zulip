@@ -109,21 +109,13 @@ navigation exposed as native Appkit actions.  Current client adapter limits:
 
 * Optional message translation
 
-Press ~T~ over a timeline message, including in Evil normal/motion state, or
-run ~M-x zulip-feed-translate-message~.  Translation loads the optional
-~appkit-translate~ component only on this explicit action.  Configure
-~appkit-translate-backend-function~ (default: the optional Respond backend)
-and ~appkit-translate-target-language~ (default: ~"zh"~) in Appkit.  Respond
-must be installed and configured separately; there is no automatic fallback.
+Press ~t~ on a message; the message menu's ~T~ opens its topic.  Translation
+appears below the original for this feed.  Configure ~appkit-translate-target-language~
+(default ~"zh"~) and ~appkit-translate-backend-function~; the default Respond
+backend needs separate installation and authentication.
 
-The shared translation region appears beneath the original message with
-pending/error status and hide, show, and retranslate actions.  It is local to
-the current feed Surface, never persisted into Zulip messages, and leaves
-the original HTML, timestamp, message actions, and composer draft untouched.
-Edits invalidate an old translation.  Source text comes from semantic HTML,
-not displayed buffer text; rendered spoiler bodies are excluded even though
-the current native renderer displays them.  Optimistic local Markdown is
-translated literally, matching its native presentation.
+Spoiler bodies are excluded even when displayed.  If server HTML cannot be
+parsed safely, nothing is sent.  Local Markdown is translated literally.
 
 * Source entrypoints
 

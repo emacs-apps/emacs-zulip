@@ -803,11 +803,16 @@ Rendered spoilers remain concealed; literal local source stays literal."
       (setq source
             (plist-put
              source :text
-             (zulip-markup-plain-text
-              (if local-p
-                  (concat "<pre>" (xml-escape-string local) "</pre>")
-                (format "%s" (or rendered content "")))
-              server))))
+             (if local-p
+                 (substring-no-properties local)
+               (condition-case err
+                   (appkit-markup-plain-text
+                    (zulip-markup-parse
+                     (format "%s" (or rendered content "")) server t))
+                 (error
+                  (user-error
+                   "Cannot safely extract Zulip text for translation; nothing sent: %s"
+                   (error-message-string err))))))))
     source))
 
 (defun zulip-feed--translate-notify (surface key)
@@ -2596,9 +2601,9 @@ is nil, prompt for a Zulip emoji name and infer whether it is already ours."
   :doc "Single-key command map active over the generated timeline."
   "q" #'quit-window
   "RET" #'zulip-feed-open-message-context
-  "t" #'zulip-feed-open-topic
+  "T" #'zulip-feed-open-topic
   "c" #'zulip-feed-copy-message
-  "T" #'zulip-feed-translate-message
+  "t" #'zulip-feed-translate-message
   "n" #'zulip-feed-next-message
   "p" #'zulip-feed-previous-message
   "r" #'zulip-feed-mark-read

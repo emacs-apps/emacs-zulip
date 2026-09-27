@@ -48,10 +48,12 @@ escape into APIs that require a server message ID."
 ;;;###autoload(autoload 'zulip-transient-msg-operate "zulip" nil t)
 (transient-define-prefix zulip-transient-msg-operate ()
   "Message actions for the Zulip feed message at point."
-  [["Navigate"
+  [["Message"
     ("o" "Open context" zulip-feed-open-message-context
      :inapt-if zulip-transient--message-inapt-reason)
-    ("t" "Open topic" zulip-feed-open-topic
+    ("T" "Open topic" zulip-feed-open-topic
+     :inapt-if zulip-transient--message-inapt-reason)
+    ("t" "Translate" zulip-feed-translate-message
      :inapt-if zulip-transient--message-inapt-reason)
     ("c" "Copy text" zulip-feed-copy-message
      :inapt-if zulip-transient--message-inapt-reason)]

@@ -1742,15 +1742,24 @@
               (should (eq (plist-get (cadr captured) :owner)
                           (appkit-current-surface))))))))))
 
+(defconst zulip-feed-test--spoiler-html
+  (concat "<p>Visible</p><div class=\"spoiler-block\">"
+          "<div class=\"spoiler-header\">Warning</div>"
+          "<div class=\"spoiler-content\">HIDDEN_REVIEW_MARKER</div></div>"))
+
 (ert-deftest zulip-feed-translate-message-renders-inline ()
+  (skip-unless (zulip-markup-libxml-available-p))
   (zulip-feed-test--with-account account
     (let* ((narrow (zulip-narrow-topic 7 "client"))
            (key (zulip-narrow-key narrow))
-           (message (zulip-feed-test--message "20" "Hello world"))
+           (message (zulip-feed-test--message
+                     "20" zulip-feed-test--spoiler-html))
            (state (zulip-state-merge-messages
                    (zulip-account-state account) (list message) key))
+           sent-text
            (backend (list :id 'echo :label "Echo"
                           :start (lambda (source _lang resolve _reject)
+                                   (setq sent-text (plist-get source :text))
                                    (funcall resolve (concat "你好 " (plist-get source :text)))
                                    nil))))
       (zulip-runtime-publish-state account state)
@@ -1758,15 +1767,93 @@
         (with-current-buffer buffer
           (appkit-chat-history-window-set "20" nil)
           (zulip-feed-render)
+          (appkit-chatbuf-input-set-text "Unsent draft")
           (goto-char (point-min))
-          (search-forward "Hello world")
+          (search-forward "Visible")
           (cl-letf (((symbol-function 'appkit-translate-respond-backend)
                      (lambda () backend)))
             (zulip-feed-translate-message)
             (zulip-runtime-test--drain account)
+            (should (equal sent-text "Visible\nWarning\n[…]"))
+            (should (equal (zulip-feed--field
+                            (zulip-state-message
+                             (zulip-account-state account) "20")
+                            'content)
+                           zulip-feed-test--spoiler-html))
+            (should (equal (appkit-chatbuf-input-string) "Unsent draft"))
             (goto-char (point-min))
-            (should (search-forward "Translation · zh · Echo" nil t))
-            (should (search-forward "你好 Hello world" nil t))))))))
+            (should (search-forward "你好 Visible" nil t))))))))
+
+(ert-deftest zulip-feed-translation-refuses-unparsed-html ()
+  (dolist (failure '(no-libxml parse-error missing-root))
+    (ert-info ((format "Semantic extraction failure: %s" failure))
+      (zulip-feed-test--with-account account
+        (let* ((narrow (zulip-narrow-topic 7 "client"))
+               (key (zulip-narrow-key narrow))
+               (message (zulip-feed-test--message
+                         "20" zulip-feed-test--spoiler-html))
+               (state (zulip-state-merge-messages
+                       (zulip-account-state account) (list message) key))
+               sent
+               (backend
+                (list :id 'capture :label "Capture"
+                      :start (lambda (&rest _args) (setq sent t)))))
+          (zulip-runtime-publish-state account state)
+          (with-current-buffer (zulip-feed--open-buffer account narrow)
+            (appkit-chat-history-window-set "20" nil)
+            (zulip-feed-render)
+            (appkit-chatbuf-input-set-text "Unsent draft")
+            (goto-char (point-min))
+            (search-forward "Visible")
+            (cl-letf (((symbol-function 'zulip-markup-libxml-available-p)
+                       (lambda () (not (eq failure 'no-libxml))))
+                      ((symbol-function 'zulip-markup--parse-html)
+                       (lambda (_html)
+                         (if (eq failure 'missing-root)
+                             nil
+                           (error "Parser failed"))))
+                      ((symbol-function 'appkit-translate-respond-backend)
+                       (lambda () backend)))
+              (should-error (zulip-feed-translate-message) :type 'user-error)
+              (should-not sent)
+              (should (equal (appkit-chatbuf-input-string) "Unsent draft"))
+              (should (equal (zulip-feed--field
+                              (zulip-state-message
+                               (zulip-account-state account) "20")
+                              'content)
+                             zulip-feed-test--spoiler-html)))))))))
+
+(ert-deftest zulip-feed-translation-refuses-overdeep-spoiler-html ()
+  (skip-unless (zulip-markup-libxml-available-p))
+  (zulip-feed-test--with-account account
+    (let* ((html (concat (apply #'concat (make-list 80 "<blockquote>"))
+                         zulip-feed-test--spoiler-html
+                         (apply #'concat (make-list 80 "</blockquote>"))))
+           (message (zulip-feed-test--message "20" html)))
+      (with-temp-buffer
+        (setq-local zulip-feed--account account)
+        ;; Local rendering/copy keeps its readable fallback, not an export
+        ;; guarantee.  Translation must not send that same fallback.
+        (should (string-match-p "HIDDEN_REVIEW_MARKER"
+                                (zulip-markup-plain-text html)))
+        (should-error (zulip-feed--translation-source message t)
+                      :type 'user-error)
+        (should (equal (zulip-feed--field message 'content) html))))))
+
+(ert-deftest zulip-feed-translation-keeps-local-markdown-literal-without-libxml ()
+  (zulip-feed-test--with-account account
+    (let* ((local "  **literal** <div class=\"spoiler-content\">text</div>\n")
+           (message (append (zulip-feed-test--message
+                             "20" zulip-feed-test--spoiler-html)
+                            (list (cons 'local-content local)))))
+      (with-temp-buffer
+        (setq-local zulip-feed--account account)
+        (cl-letf (((symbol-function 'zulip-markup-libxml-available-p)
+                   (lambda () nil)))
+          (should (equal (plist-get
+                          (zulip-feed--translation-source message t) :text)
+                         local))
+          (should (equal (zulip-feed--field message 'local-content) local)))))))
 
 (provide 'zulip-feed-test)
 
