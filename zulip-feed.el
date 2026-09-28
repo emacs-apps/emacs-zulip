@@ -65,6 +65,11 @@
 (defvar-local zulip-feed--account nil
   "Account owning the current feed buffer.")
 
+(defvar-local zulip-feed-view-change-hook nil
+  "Hook run after this feed's committed projection or Surface teardown.
+The feed buffer is current; observers can inspect its rendered rows and
+exact live Surface.  This UI notification does not run at domain commit.")
+
 
 (defvar-local zulip-feed--narrow nil
   "Canonical narrow displayed by the current feed buffer.")
@@ -2894,6 +2899,7 @@ Account-owned optimistic sends remain in their shared domain table."
                 (position (appkit-chat-timeline-key-position target)))
       (setq zulip-feed--pending-jump-id nil)
       (goto-char position))
+    (run-hooks 'zulip-feed-view-change-hook)
     (when reconcile (appkit-projection--resource-result rows))))
 
 (defun zulip-feed--renderer (_surface)
@@ -2943,7 +2949,8 @@ Account-owned optimistic sends remain in their shared domain table."
   (zulip-feed--advance-edit-generation)
   (appkit-chatbuf-aux-reset)
   (setq-local appkit-chat-timeline--state nil
-              buffer-read-only nil))
+              buffer-read-only nil)
+  (run-hooks 'zulip-feed-view-change-hook))
 
 (defun zulip-feed--initialize-mode ()
   "Initialize the existing derived feed mode before a replacement attaches."

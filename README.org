@@ -73,6 +73,10 @@ registration runs in the background.
 - Optimistic sends are App-owned and may settle after their feed closes.
   A ~local-*~ row is idempotently promoted to the server ID whether the event or
   HTTP response arrives first; retrying a failed row preserves its local identity.
+- Message menus allow Copy and Translate on local text before acknowledgement;
+  server-backed actions still require a server message ID.  A visible send
+  failure refreshes the open menu immediately, so the first ~R~ retries it.
+  Exiting the menu or retiring its source view releases that refresh ownership.
 - Auto-read only submits observed, unread, server-backed messages in the current
   contiguous history window, never across gaps.  Explicit unread suppresses
   immediate reversal until deliberate observation; ~zulip-auto-mark-read~ can
