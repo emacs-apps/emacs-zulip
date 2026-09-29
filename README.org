@@ -1,5 +1,7 @@
 #+title: emacs-zulip
 
+Repository: [[https://github.com/emacs-apps/emacs-zulip][emacs-apps/emacs-zulip]].
+
 An Appkit-based, multi-account Zulip client for Emacs.
 
 * Setup
